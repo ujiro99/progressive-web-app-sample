@@ -20,6 +20,7 @@
     isLoading: true,
     visibleCards: {},
     selectedCities: [],
+    hasRequestPending: false,
     spinner: document.querySelector('.loader'),
     cardTemplate: document.querySelector('.cardTemplate'),
     container: document.querySelector('.main'),
@@ -178,20 +179,26 @@
       caches.match(url).then(function(response) {
         if (response) {
           response.json().then(function updateFromCache(json) {
-            var results = json.query.results;
-            results.key = key;
-            results.label = label;
-            results.created = json.query.created;
-            app.updateForecastCard(results);
+            if (app.hasRequestPending) {
+              console.log('update from cache')
+              var results = json.query.results;
+              results.key = key;
+              results.label = label;
+              results.created = json.query.created;
+              app.updateForecastCard(results);
+            }
           });
         }
       });
     }
     // Fetch the latest data.
+    app.hasRequestPending = true;
     var request = new XMLHttpRequest();
     request.onreadystatechange = function() {
       if (request.readyState === XMLHttpRequest.DONE) {
+        app.hasRequestPending = false;
         if (request.status === 200) {
+          console.log('update from network')
           var response = JSON.parse(request.response);
           var results = response.query.results;
           results.key = key;
